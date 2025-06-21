@@ -24,14 +24,6 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 
-// Static Files
-const publicDirectory = path.join(__dirname, '../public');
-app.use(express.static(publicDirectory));
-
-// View Engine
-app.use(expressLayouts);
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../views'));
 
 // Session & Flash Messages
 app.use(
@@ -62,9 +54,9 @@ mongoose
     .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // Routes
-const indexRoutes = require('./routes/home');
-const userRoutes = require('./routes/user');
-const ecomRoutes = require('./routes/ecom');
+const indexRoutes = require('./src/routes/home');
+const userRoutes = require('./src/routes/user');
+const ecomRoutes = require('./src/routes/ecom');
 
 app.use('/', indexRoutes);
 app.use('/user', userRoutes);
