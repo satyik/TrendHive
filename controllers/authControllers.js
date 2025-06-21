@@ -2,7 +2,7 @@ const User = require('../src/models/User')
 const jwt = require('jsonwebtoken')
 const { signupMail,passwordMail,joinGroupMail } = require('../config/nodemailer')
 const path = require('path')
-const { handleErrors } = require('../src/utilities/Utilities'); 
+const { handleErrors } = require('../utilities/Utilities'); 
 const crypto = require('crypto')
 require('dotenv').config()
 const { nanoId } = require("nanoid")
