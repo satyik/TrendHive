@@ -1,152 +1,78 @@
-const express = require('express')
-const router = express.Router()
-const fs = require('fs')
-const path = require('path')
-const { v4 } = require('uuid');
-// const mkdirp=require('mkdirp')
-//const upload= require('../controllers/authControllers')
+const express = require('express');
+const router = express.Router();
 
-//uploading files with multer
-const multer = require('multer')
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // console.log("in multer",file)
-        if(file.fieldname==='photo'){
-            const userEmail = req.user.email.toLowerCase()
-            var dir = `./public/uploads/${userEmail}/${file.fieldname}`
-        }
-        else if(file.fieldname!=='profilePic'){
-        const {name}=req.body 
-        // console.log('disease name',name)
-        //console.log('field',file.fieldname)
-        const dname= name.toLowerCase()
-        const userEmail = req.user.email.toLowerCase()
-        var dir = `./public/uploads/${userEmail}/${dname}/${file.fieldname}`
-        }else{
-            const userEmail = req.user.email.toLowerCase()
-            var dir = `./public/uploads/${userEmail}/${file.fieldname}`
-            // console.log("dir:",dir)
-        }
-        if (!fs.existsSync(dir)) {
-            //console.log("making files")
-            fs.mkdirSync(dir, { recursive: true }, (err) => {
-                if (err) console.error('New Directory Creation Error');
-            })
-        }
-        cb(null, dir)
-    },
-    filename: (req, file, cb) => {
-        // const userId = req.user._id
+const authController = require('../controllers/authControllers');
+const { requireAuth, redirectIfLoggedIn } = require('../middleware/userAuthMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
-       // fileName= path.join(`${file.fieldname}`,`File-${v4()}-${file.originalname}-${path.extname(file.originalname)}`)
-        //console.log(fileName)
-        if(file.fieldname==='profilePic'){
-        const user=req.user
-        user.profilePic=`ProfilePic_${file.originalname}`
-        cb(null,`ProfilePic_${file.originalname}` )
-        }else{
-        cb(null,`File-${v4()}-${file.originalname}` )
-        }
-    },
-})
+// -------------------------
+// Auth Routes
+// -------------------------
+router.get('/verify/:id', authController.emailVerify_get);
+router.get('/signup', redirectIfLoggedIn, authController.signup_get);
+router.post('/signup', authController.signup_post);
+router.get('/login', redirectIfLoggedIn, authController.login_get);
+router.post('/login', authController.login_post);
+router.get('/logout', requireAuth, authController.logout_get);
+router.get('/profile', requireAuth, authController.profile_get);
 
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 6000000 },
-    fileFilter: function (req, file, cb) {
-        if(file.fieldname==='profilePic'){
-        checkFileType1(file, cb)
-        }else{
-        checkFileType(file, cb)
-        }
-    },
-})
-function checkFileType(file, cb) {
-    const filetypes = /jpeg|jpg|png|gif|pdf/
-    const extname = filetypes.test(
-        path.extname(file.originalname).toLowerCase()
-    )
-    const mimetype = filetypes.test(file.mimetype)
-    if (mimetype && extname) {
-        return cb(null, true)
-    } else {
-        console.log("invalid file")
-        // req.flash("error_msg", "Enter a valid picture of format jpeg jpg png") 
-        return cb(null,false)
-    }
-}
-function checkFileType1(file, cb) {
-    const filetypes = /jpeg|jpg|png/
-    const extname = filetypes.test(
-        path.extname(file.originalname).toLowerCase()
-    )
-    const mimetype = filetypes.test(file.mimetype)
-    if (mimetype && extname) {
-        // console.log("invalid file")
-        return cb(null, true)
-    } else {
-        // console.log("invalid file")
-        // req.flash("error_msg", "Enter a valid picture of format jpeg jpg png") 
-        cb(null,false)
-        
-    }
-}
+// -------------------------
+// Group Features
+// -------------------------
+router.get('/createGroup', requireAuth, authController.createGroup_get);
+router.post('/createGroup', requireAuth, upload.single('photo'), authController.createGroup_post);
 
-//uploading finishes
-const authController = require('../controllers/authControllers')
-const { requireAuth, redirectIfLoggedIn } = require('../middleware/userAuth')
-router.get('/verify/:id', authController.emailVerify_get)
-router.get('/signup',redirectIfLoggedIn, authController.signup_get)
-router.post('/signup', authController.signup_post)
-router.get('/login', redirectIfLoggedIn, authController.login_get)
-router.post('/login', authController.login_post)
-router.get('/logout', requireAuth, authController.logout_get)
-router.get('/profile', requireAuth, authController.profile_get)
+router.get('/groupFeed', requireAuth, authController.groupFeed_get);
+router.get('/groupLanding', requireAuth, authController.groupLanding_get);
+router.get('/joinGroup/:id', requireAuth, authController.joinGroup_get);
+router.get('/homeGroup', requireAuth, authController.homeGroup_get);
+router.get('/homegroupPage/:name', requireAuth, authController.homegroupPage);
+router.post('/groupEdit/:id', requireAuth, authController.groupEdit);
 
-//For hackathon
+// -------------------------
+// Posts in Groups
+// -------------------------
+router.post('/postinGroup/:id', requireAuth, upload.single('photo'), authController.postinGroup_post);
+router.post('/updatepost/:id', requireAuth, authController.updatePost_post);
 
-//Add Group Feature
-router.get('/createGroup', requireAuth, authController.createGroup_get)
-router.post('/createGroup', requireAuth,upload.single('photo'), authController.createGroup_post)
+// -------------------------
+// Comments & Likes
+// -------------------------
+router.get('/likePost/:id/:gid', requireAuth, authController.likePost);
+router.get('/like/:id', requireAuth, authController.like);
+router.get('/likeProfile/:id', requireAuth, authController.like_profile);
 
-router.get('/groupFeed', requireAuth, authController.groupFeed_get)
-router.get('/groupLanding', requireAuth, authController.groupLanding_get)
+router.post('/comment/:id', requireAuth, authController.comment_profile);
+router.post('/commentGroup/:id', requireAuth, authController.comment_homeGroup);
+router.post('/commentHome/:id/:gid', requireAuth, authController.comment_home);
 
-router.get('/joinGroup/:id', requireAuth, authController.joinGroup_get)
-router.post('/onboarding', requireAuth, authController.onboarding_post)
-//Post in a Group
-router.post('/postinGroup/:id', requireAuth,upload.single('photo'), authController.postinGroup_post)
-router.post('/updatepost/:id', requireAuth, authController.updatePost_post)
-// router.post('/deletepost', requireAuth, authController.deletePost_post)
-//group home page
-router.get('/homeGroup', requireAuth, authController.homeGroup_get)
-router.post('/search', requireAuth, authController.search_post)
-router.get('/homegroupPage/:name', requireAuth, authController.homegroupPage)//send name to get group home page
-//End
-router.post('/groupEdit/:id', requireAuth, authController.groupEdit)
+// -------------------------
+// Search & Onboarding
+// -------------------------
+router.post('/search', requireAuth, authController.search_post);
+router.post('/onboarding', requireAuth, authController.onboarding_post);
 
-//router.get('/profileNew'/*, requireAuth,*/, authController.profileNew_get)
+// -------------------------
+// Password Reset
+// -------------------------
+router.get('/forgotPassword', redirectIfLoggedIn, authController.getForgotPasswordForm);
+router.post('/forgotPassword', redirectIfLoggedIn, authController.forgotPassword);
+router.get('/resetPassword/:id/:token', authController.getPasswordResetForm);
+router.post('/resetPassword/:id/:token', authController.resetPassword);
 
-
-
-
-router.get('/likePost/:id/:gid', requireAuth,authController.likePost)
-router.get('/like/:id', requireAuth,authController.like)
-router.get('/likeProfile/:id', requireAuth,authController.like_profile)
-router.post('/comment/:id', requireAuth,authController.comment_profile)//send post's id
-router.post('/commentGroup/:id', requireAuth,authController.comment_homeGroup)
-router.post('/commentHome/:id/:gid', requireAuth,authController.comment_home)
-router.get('/forgotPassword', redirectIfLoggedIn,authController.getForgotPasswordForm)
-router.post('/forgotPassword', redirectIfLoggedIn,authController.forgotPassword)
-router.get('/resetPassword/:id/:token',authController.getPasswordResetForm)
-router.post('/resetPassword/:id/:token',authController.resetPassword)
-router.get('/download/:type/pdf',requireAuth,authController.download)
+// -------------------------
+// Profile Pic Upload
+// -------------------------
 router.post(
-    '/profile/picupload',
-    requireAuth,
-    upload.single(
-            'photo',
-      ),  
-    authController.picupload_post
-)
-module.exports = router
+  '/profile/picupload',
+  requireAuth,
+  upload.single('photo'),
+  authController.picupload_post
+);
+
+// -------------------------
+// File Download
+// -------------------------
+router.get('/download/:type/pdf', requireAuth, authController.download);
+
+module.exports = router;
