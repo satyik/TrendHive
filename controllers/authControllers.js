@@ -32,46 +32,55 @@ module.exports.login_get = (req, res) => {
 }
 
 module.exports.signup_post = async (req, res) => {
-    const { name, email, password, confirmPwd, phoneNumber } = req.body
-    console.log("in sign up route",req.body);
-    if (password != confirmPwd) {
-        req.flash('error_msg', 'Passwords do not match. Try again')
-        res.status(400).redirect('/user/login')
-        return
+    const { name, email, password, confirmPwd, phoneNumber } = req.body;
+    console.log("In sign-up route:", req.body);
+
+    // 1. Password mismatch
+    if (password !== confirmPwd) {
+        return res.status(400).json({
+            success: false,
+            message: 'Passwords do not match. Try again.'
+        });
     }
 
     try {
-        const userExists = await User.findOne({ email })
-        // console.log('userexists', userExists)
-        /*if(userExists && userExists.active== false)
-    {
-      req.flash("success_msg",`${userExists.name}, we have sent you a link to verify your account kindly check your mail`)
+        const userExists = await User.findOne({ email });
 
-      signupMail(userExists,req.hostname,req.protocol)
-      return res.redirect("/signup")
-    }*/
+        // 2. If user already exists
         if (userExists) {
-            req.flash(
-                'success_msg',
-                'This email is already registered. Try logging in'
-            )
-            return res.redirect('/user/login')
+            return res.status(400).json({
+                success: false,
+                message: 'This email is already registered. Try logging in.'
+            });
         }
-        const user = new User({ email, name, password, phoneNumber})
-        let saveUser = await user.save()
-        // console.log(saveUser);
-        req.flash(
-            'success_msg',
-            'Registration successful. Check your inbox to verify your email'
-        )
-        signupMail(saveUser, req.hostname, req.protocol)
-        //res.send(saveUser)
-        res.redirect('/user/login')
+
+        // 3. Create new user
+        const user = new User({ name, email, password, phoneNumber });
+        const savedUser = await user.save();
+
+        // 4. Send verification email
+        signupMail(savedUser, req.hostname, req.protocol);
+
+        // 5. Respond with success
+        return res.status(201).json({
+            success: true,
+            message: 'Registration successful. Check your inbox to verify your email.',
+            user: {
+                id: savedUser._id,
+                name: savedUser.name,
+                email: savedUser.email
+            }
+        });
+
     } catch (err) {
-        console.log(err)
-        res.status(400).redirect('/user/signup')
+        console.error("Signup error:", err);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong during signup. Please try again later.'
+        });
     }
-}
+};
+
 module.exports.emailVerify_get = async (req, res) => {
     try {
         const userID = req.params.id
