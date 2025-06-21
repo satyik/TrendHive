@@ -37,12 +37,6 @@ app.use(
         },
     })
 );
-app.use(connect_flash());
-app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
-    next();
-});
 
 // MongoDB Connection
 mongoose
@@ -59,10 +53,6 @@ app.use('/', indexRoutes);
 app.use('/user', userRoutes);
 app.use('/', ecomRoutes);
 
-// 404 Handler
-app.use((req, res) => {
-    res.status(404).render('404');
-});
 
 // Error Handler
 app.use((err, req, res, next) => {
