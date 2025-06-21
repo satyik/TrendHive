@@ -54,9 +54,9 @@ mongoose
     .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // Routes
-const indexRoutes = require('./src/routes/home');
-const userRoutes = require('./src/routes/user');
-const ecomRoutes = require('./src/routes/ecom');
+const indexRoutes = require('./routes/home');
+const userRoutes = require('./routes/user');
+const ecomRoutes = require('./routes/ecom');
 
 app.use('/', indexRoutes);
 app.use('/user', userRoutes);

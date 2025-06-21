@@ -1,14 +1,14 @@
-const User = require('../models/User')
+const User = require('../src/models/User')
 const jwt = require('jsonwebtoken')
 const { signupMail,passwordMail,joinGroupMail } = require('../config/nodemailer')
 const path = require('path')
-const { handleErrors } = require('../utilities/Utilities'); 
+const { handleErrors } = require('../src/utilities/Utilities'); 
 const crypto = require('crypto')
 require('dotenv').config()
 const { nanoId } = require("nanoid")
 const mongoose=require('mongoose')
-const Group = require('../models/Group')
-const Post = require('../models/Post')
+const Group = require('../src/models/Group')
+const Post = require('../src/models/Post')
 const axios = require('axios')
 const cloudinary = require('cloudinary').v2
 cloudinary.config({

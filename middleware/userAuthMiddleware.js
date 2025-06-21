@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const User = require('../src/models/User');
 require('dotenv').config();
 
 // Middleware to protect routes (requires valid JWT)

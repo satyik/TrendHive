@@ -1,5 +1,5 @@
-const Product = require('../models/product.model');
-const User = require('../models/User');
+const Product = require('../src/models/product.model');
+const User = require('../src/models/User');
 
 exports.getBag = async (req, res) => {
   try {

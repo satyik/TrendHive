@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const Contact = require('../models/Contact');
-const User = require('../models/User');
+const Contact = require('../src/models/Contact');
+const User = require('../src/models/User');
 const { contactMail } = require('../config/nodemailer');
 
 // GET /api/home
