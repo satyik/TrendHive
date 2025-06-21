@@ -118,56 +118,60 @@ module.exports.emailVerify_get = async (req, res) => {
 }
 
 module.exports.login_post = async (req, res) => {
-    const { email, password } = req.body
-    // console.log('in Login route')
-    //   console.log('req.body',req.body)
+    const { email, password } = req.body;
+    
     try {
+        const user = await User.login(email, password);
+        const userExists = await User.findOne({ email });
 
-        const user = await User.login(email, password)
-        // console.log("user",user)
-
-        const userExists = await User.findOne({ email })  
-    //    console.log("userexsits",userExists)
-       
-
+        // Check if user account is not active
         if (!userExists.active) {
             const currDate = new Date();
             const initialUpdatedAt = userExists.updatedAt;
             const timeDiff = Math.abs(currDate.getTime() - initialUpdatedAt.getTime());
-            if(timeDiff<=10800000)
-            {
-                // console.log("Email already sent check it")
-                req.flash(
-                    'error_msg',
-                    `${userExists.name}, we have already sent you a verify link please check your email`)
-                res.redirect('/user/login')
-                return
+            
+            // If verification email was sent within last 3 hours (10800000 ms)
+            if (timeDiff <= 10800000) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${userExists.name}, we have already sent you a verify link please check your email`,
+                    type: 'verification_pending'
+                });
             }
-            req.flash(
-                'success_msg',
-                `${userExists.name}, your verify link has expired we have sent you another email please check you mailbox`
-            )
-            signupMail(userExists, req.hostname, req.protocol)
+            
+            // Verification link expired, send new one
+            signupMail(userExists, req.hostname, req.protocol);
             await User.findByIdAndUpdate(userExists._id, { updatedAt: new Date() });
-            // console.log('userExists',userExists)
-            res.redirect('/user/login')
-            return
+            
+            return res.status(200).json({
+                success: false,
+                message: `${userExists.name}, your verify link has expired we have sent you another email please check your mailbox`,
+                type: 'verification_resent'
+            });
         }
-       
-        const token = user.generateAuthToken(maxAge)
 
-        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 })
-        // console.log(user);
-        //signupMail(saveUser)
-    //    console.log("logged in")
-        req.flash('success_msg', 'Successfully logged in')
-        res.status(200).redirect('/user/profile')
+        // Generate auth token and set cookie
+        const token = user.generateAuthToken(maxAge);
+        res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+
+        // Return success response with user data
+        res.status(200).json({
+            success: true,
+            message: 'Successfully logged in',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        });
+
     } catch (err) {
-        req.flash('error_msg', 'Invalid Credentials')
-        // console.log(err)
-        res.redirect('/user/login')
+        res.status(401).json({
+            success: false,
+            message: 'Invalid Credentials'
+        });
     }
-}
+};
 
 
 module.exports.search_post=async(req,res)=>{
