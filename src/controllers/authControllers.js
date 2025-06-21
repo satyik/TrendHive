@@ -18,12 +18,6 @@ cloudinary.config({
 })
 const maxAge = 30 * 24 * 60 * 60
 
-
-
-
-
-
-
 // controller actions
 module.exports.signup_get = (req, res) => {
     res.render('./userViews/signup',{

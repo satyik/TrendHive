@@ -1,114 +1,87 @@
-const express = require('express')
-const path = require('path')
+const express = require('express');
+const path = require('path');
+const mongoose = require('mongoose');
+const connect_flash = require('connect-flash');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const expressLayouts = require('express-ejs-layouts');
+const helmet = require('helmet');
+const morgan = require('morgan');
+require('dotenv').config();
 
-const mongoose = require('mongoose')
-const connect_flash = require('connect-flash')
-const session = require('express-session')
-const cookieParser = require('cookie-parser')
-const expressLayouts = require('express-ejs-layouts')
-//Configuring App
-const app = express()
-app.use(express.json())
-// app.use(express.static('public'))
-app.use(cookieParser())
-// using dotenv module for environment
-require('dotenv').config()
+// Initialize App
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-//Configuring Port
-const PORT = process.env.PORT || 3000
+// Middleware Setup
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(helmet());
 
-//Mongoose connection
+// Logging
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+}
+
+// Static Files
+const publicDirectory = path.join(__dirname, '../public');
+app.use(express.static(publicDirectory));
+
+// View Engine
+app.use(expressLayouts);
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+
+// Session & Flash Messages
+app.use(
+    session({
+        secret: process.env.JWT_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        },
+    })
+);
+app.use(connect_flash());
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
+});
+
+// MongoDB Connection
 mongoose
     .connect(process.env.MONGODB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
     })
-    .then(() => console.log('Connected to mongo server'))
-    .catch((err) => console.error(err))
+    .then(() => console.log('✅ Connected to MongoDB'))
+    .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-const publicDirectory = path.join(__dirname, '../public')
-    // console.log(publicDirectory);
-app.use(express.static(publicDirectory))
+// Routes
+const indexRoutes = require('./routes/home');
+const userRoutes = require('./routes/user');
+const ecomRoutes = require('./routes/ecom');
 
-//Setting EJS view engine
-app.set('views', path.join(__dirname, '../views'));
+app.use('/', indexRoutes);
+app.use('/user', userRoutes);
+app.use('/', ecomRoutes);
 
-app.set('view engine', 'ejs')
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).render('404');
+});
 
-//app.use(expressLayouts);
-//body parser
-app.use(express.urlencoded({ extended: true }))
-app.use(
-    session({
-        secret: process.env.JWT_SECRET,
-        resave: true,
-        saveUninitialized: true,
-    })
-)
+// Error Handler
+app.use((err, req, res, next) => {
+    console.error('❌', err.stack);
+    res.status(500).send('Internal Server Error');
+});
 
-app.use(connect_flash())
-
-// global var
-app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg')
-    res.locals.error_msg = req.flash('error_msg')
-
-    next()
-})
-
-//Setup for rendering static pages
-
-
-//Routes
-const indexRoutes = require('./routes/index')
-const userRoutes = require('./routes/user')
-const ecomRoutes = require('./routes/ecom')
-// const hospitalRoutes = require('./routes/hospital')
-
-app.use('/',indexRoutes)
-app.use('/user',userRoutes)
-app.use('/', ecomRoutes)
-
-//Start the server
+// Start Server
 app.listen(PORT, () => {
-    console.log('Server listening on port', PORT)
-})
-
-
-// const  User = require('./models/Post')
-//  const databasedlt= async()=>{
-//     const user = await User.find({})
-//     user.forEach(async(data)=>{
-//          await User.findByIdAndDelete(data._id)
-//     })
-//     console.log("deleted")
-//  }
-//  databasedlt()
-
-
-//  const User= require('./models/User')
-// const databasedlt= async()=>{
-//    const user = await User.find({})
-//    user.forEach(async(data)=>{
-//         await User.findByIdAndDelete(data._id)
-//    })
-//    console.log("deleted")
-// }
-// databasedlt()
-
-
-
-//  const Relations= require('./models/Relations')
-// const databasedlt= async()=>{
-//    const user = await Relations.find({_id: "60259290d60e72021ba9ed4a"})
-//    user.forEach(async(data)=>{
-//         await Relations.findByIdAndDelete(data._id)
-//    })
-//    console.log("deleted")
-// }
-// databasedlt()
-
-
-
+    console.log(`🚀 Server listening on port ${PORT}`);
+});

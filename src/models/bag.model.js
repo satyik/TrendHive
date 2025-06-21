@@ -1,19 +1,37 @@
 const mongoose = require("mongoose");
 
+const bagItemSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "product",
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: [1, "Quantity must be at least 1"],
+    default: 1,
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: [0, "Price must be non-negative"],
+  },
+});
+
 const bagSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
+      required: true,
     },
-    products: [
-      {
-        productId: Number,
-        quantity: Number,
-        name: String,
-        price: Number,
-      },
-    ],
+    products: [bagItemSchema],
     active: {
       type: Boolean,
       default: true,
@@ -23,7 +41,9 @@ const bagSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // adds createdAt and updatedAt
+  }
 );
 
-module.exports = mongoose.model("bag", bagSchema);
+module.exports = mongoose.model("Bag", bagSchema);

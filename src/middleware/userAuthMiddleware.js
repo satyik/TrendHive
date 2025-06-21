@@ -1,57 +1,50 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+require('dotenv').config();
 
-require('dotenv').config()
+// Middleware to protect routes (requires valid JWT)
+const requireAuth = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
 
-const requireAuth = (req, res, next) => {
-    try{
-    const token = req.cookies.jwt
-    //console.log(token);
-    // check json web token exists & is verified
-    if (token) {
-        jwt.verify(token, process.env.JWT_SECRET, async (err, decodedToken) => {
-            if (err) {
-                console.log(err.message)
-
-                res.redirect('/user/login')
-            } else {
-                let user = await User.findById(decodedToken.id)
-                // if null then redirect to signup
-                if (user == null)
-                {
-                    req.flash("error_msg", "You do not have an account yet, kindly sign up for one"); 
-                    res.clearCookie('jwt')
-                    res.redirect("/user/signup"); 
-                    return; 
-                }
-                //else to profile
-                req.user = user
-                //console.log("current user", req.user)
-
-                next()
-            }
-        })
-    } else {
-        res.redirect('/user/login')
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized: No token provided' });
     }
-}
-catch(error){
-    res.redirect("/user/login");
-}
-}
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).lean();
 
-const redirectIfLoggedIn = (req, res, next) => {
-    const token = req.cookies.jwt 
-    if (token)
-    {
-        req.flash("error_msg", "You are already logged in.")
-        res.redirect("/user/profile")
+    if (!user) {
+      res.clearCookie('jwt');
+      return res.status(401).json({ error: 'Unauthorized: Invalid user' });
     }
-    else
-    {
-        next(); 
-    }
-}
 
-module.exports = { requireAuth, redirectIfLoggedIn }
+    req.user = user; // attach user to req object
+    next();
+  } catch (err) {
+    console.error('Auth error:', err.message);
+    return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
+  }
+};
+
+// Middleware to prevent access if already logged in (for login/signup routes)
+const redirectIfLoggedIn = async (req, res, next) => {
+  const token = req.cookies.jwt;
+
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (user) {
+      return res.status(403).json({ error: 'You are already logged in' });
+    }
+
+    next();
+  } catch {
+    next(); // token invalid or expired — proceed normally
+  }
+};
+
+module.exports = { requireAuth, redirectIfLoggedIn };

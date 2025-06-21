@@ -1,238 +1,128 @@
-const nodemailer = require('nodemailer')
-require('dotenv').config()
-const jwt = require('jsonwebtoken')
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const joinGroupMail = (group,user, host, protocol) => {
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.NODEMAILER_EMAIL, //email id
-
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    var mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: `${user.email}`,
-        subject: `Hey,${user.name} you have joined Group:${group.name}` ,
-        html:
-            `<h3>${group.name}</h3><br><h4>Is delighted to have you as one of its members</h4><br><h4>-THE SORTED STORE</h4>`,
-    }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-    })
+if (!process.env.NODEMAILER_EMAIL || !process.env.NODEMAILER_PASSWORD) {
+  throw new Error("Missing email credentials in environment variables");
 }
-const signupMail = (data, host, protocol) => {
-    const maxAge = 3 * 60 * 60
 
-    const TOKEN = jwt.sign({ id: data._id }, process.env.JWT_SECRET, {
-        expiresIn: maxAge,
-    })
-    const PORT = process.env.PORT || 3000
-    const link = `${protocol}://${host}:${PORT}/user/verify/${data._id}?tkn=${TOKEN}`
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.NODEMAILER_EMAIL,
+    pass: process.env.NODEMAILER_PASSWORD,
+  },
+});
 
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.NODEMAILER_EMAIL, //email id
-
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    var mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: `${data.email}`,
-        subject: 'Please confirm your Email account',
-        html:
-            'Hello,<br> Please here to verify your email.<br><a href=' +
-            link +
-            '>Click here to verify</a>',
+const sendMail = (options) => {
+  transporter.sendMail(options, (error, info) => {
+    if (error) {
+      console.error('Mail Error:', error.message);
+    } else {
+      console.log('Email sent to:', options.to);
     }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-    })
-}
+  });
+};
+
+const buildLink = (path, id, token, host, protocol) => {
+  const PORT = process.env.PORT || 3000;
+  return `${protocol}://${host}:${PORT}${path}/${id}?tkn=${token}`;
+};
+
+const signupMail = (user, host, protocol) => {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '3h' });
+  const link = buildLink('/user/verify', user._id, token, host, protocol);
+
+  sendMail({
+    from: process.env.NODEMAILER_EMAIL,
+    to: user.email,
+    subject: 'Please confirm your email',
+    html: `Hello,<br>Please <a href="${link}">click here</a> to verify your email.`,
+  });
+};
 
 const contactMail = (issue, type) => {
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user:process.env.NODEMAILER_EMAIL , //email id
+  const userHtml = `Hello, ${issue.name}.<br>
+    We have received your issue: <br><strong>"${issue.message}"</strong><br>
+    We are working on it and shall resolve it soon.<br><br>Thank you!`;
 
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    const userContent = `Hello, ${issue.name}.<br> 
-    We have received your issue stating - <br> "${issue.message}" 
-    We are working on it and shall resolve it soon. <br>
-    Thank you!`;
-    const adminContent = `A new Report has been issued.<br>
-    <p>Name - ${issue.name}</p><br>
-    <p>Email Id - ${issue.email}</p><br>
-    <p>Subject - ${issue.subject}</p><br>
-    <p>Message - ${issue.message}</p>`;
-    const response = {
-        user : {
-            from : process.env.NODEMAILER_EMAIL,
-            to : `${issue.email}`,
-            subject : `Records - ${issue.subject}`,
-            html : userContent
-        },
-        admin:{
-            from : process.env.NODEMAILER_SECONDARYEMAIL,
-            to : process.env.NODEMAILER_EMAIL,
-            subject : 'New Issue Found',
-            html : adminContent
-        }
-    }
-    
-    var mailOptions = {
-        from: response[type].from,
-        to : response[type].to,
-        subject : response[type].subject,
-        html : response[type].html
-    }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-    })
-}
+  const adminHtml = `New user issue received:<br>
+    <p><strong>Name:</strong> ${issue.name}</p>
+    <p><strong>Email:</strong> ${issue.email}</p>
+    <p><strong>Subject:</strong> ${issue.subject}</p>
+    <p><strong>Message:</strong> ${issue.message}</p>`;
 
+  const response = {
+    user: {
+      from: process.env.NODEMAILER_EMAIL,
+      to: issue.email,
+      subject: `Issue: ${issue.subject}`,
+      html: userHtml,
+    },
+    admin: {
+      from: process.env.NODEMAILER_SECONDARYEMAIL || process.env.NODEMAILER_EMAIL,
+      to: process.env.NODEMAILER_EMAIL,
+      subject: 'New Issue Reported',
+      html: adminHtml,
+    },
+  };
 
+  sendMail(response[type]);
+};
 
+const joinGroupMail = (group, user) => {
+  sendMail({
+    from: process.env.NODEMAILER_EMAIL,
+    to: user.email,
+    subject: `You've joined Group: ${group.name}`,
+    html: `<h3>${group.name}</h3><p>We're thrilled to have you as a member!</p><br><h4>- THE SORTED STORE</h4>`,
+  });
+};
 
-const relationMail = (data,user, host, protocol) => {
-    const maxAge = 3 * 60 * 60
+const relationMail = (data, user, host, protocol) => {
+  const token = jwt.sign({ id: data._id }, process.env.JWT_SECRET, { expiresIn: '3h' });
+  const link = buildLink('/hospital/verifyRelation', data._id, token, host, protocol);
 
-    const TOKEN = jwt.sign({ id: data._id }, process.env.JWT_SECRET, {
-        expiresIn: maxAge,
-    })
-    const PORT = process.env.PORT || 3000
-    const link = `${protocol}://${host}:${PORT}/hospital/verifyRelation/${data._id}?tkn=${TOKEN}`
+  sendMail({
+    from: process.env.NODEMAILER_EMAIL,
+    to: user.email,
+    subject: 'Grant Hospital Access',
+    html: `Hello,<br> Please <a href="${link}">click here</a> to grant hospital access to your records.`,
+  });
+};
 
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.NODEMAILER_EMAIL, //email id
+const passwordMail = (user, token, host, protocol) => {
+  const PORT = process.env.PORT || 3000;
+  const link = `${protocol}://${host}:${PORT}/user/resetPassword/${user._id}/${token}`;
 
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    var mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: `${user.email}`,
-        subject: 'Give access to hospital',
-        html:
-            'Hello,<br> Please click here to give access to your documents to hospital.<br><a href=' +
-            link +
-            '>Click here </a>',
-    }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-    })
-}
-const passwordMail = (user,TOKEN,host,protocol)=>{
-    const PORT = process.env.PORT || 3000
-    const link = `${protocol}://${host}:${PORT}/user/resetPassword/${user._id}/${TOKEN}`
+  sendMail({
+    from: process.env.NODEMAILER_EMAIL,
+    to: user.email,
+    subject: 'Reset Your Password',
+    html: `Hello,<br> Please <a href="${link}">click here</a> to reset your password.`,
+  });
+};
 
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.NODEMAILER_EMAIL, //email id
+const nomineeMail = (ticket, nominee, user, host, protocol) => {
+  const token = jwt.sign({ id: ticket._id }, process.env.JWT_SECRET, { expiresIn: '3h' });
+  const link = buildLink('/hospital/verifyNominee', ticket._id, token, host, protocol);
 
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    var mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: `${user.email}`,
-        subject: 'Give access to change your password',
-        html:
-            'Hello,<br> Please click here to give change your password.<br><a href=' +
-            link +
-            '>Click here </a>',
-    }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-})
-}
-
-
-
-
-const nomineeMail = (ticket,nominee,user, host, protocol) => {
-    const maxAge = 3 * 60 * 60
-    const patient_name = user.name; 
-    const TOKEN = jwt.sign({ id: ticket._id }, process.env.JWT_SECRET, {
-        expiresIn: maxAge,
-    })
-    const PORT = process.env.PORT || 3000
-    const link = `${protocol}://${host}:${PORT}/hospital/verifyNominee/${ticket._id}?tkn=${TOKEN}`
-
-    var transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.NODEMAILER_EMAIL, //email id
-
-            pass: process.env.NODEMAILER_PASSWORD, // gmail password
-        },
-    })
-    var mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: `${nominee.email}`,
-        subject: 'Give access to hospital',
-        html:
-            'Hello,<br> You are nominee of ' + patient_name +'.<br>Kindly grant access to patient data. <br> <a href=' +
-            link +
-            '>Click here </a>',
-    }
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log('Error', error)
-        } else {
-            console.log('Email sent: ')
-        }
-    })
-}
-
-
+  sendMail({
+    from: process.env.NODEMAILER_EMAIL,
+    to: nominee.email,
+    subject: `Nominee Access Request for ${user.name}`,
+    html: `Hello,<br>You are listed as a nominee by ${user.name}.<br>
+           Please <a href="${link}">click here</a> to grant access.`,
+  });
+};
 
 module.exports = {
-    signupMail,
-    contactMail, 
-    relationMail,
-    passwordMail, 
-    nomineeMail,
-    joinGroupMail
-}
+  signupMail,
+  contactMail,
+  relationMail,
+  passwordMail,
+  nomineeMail,
+  joinGroupMail,
+};
