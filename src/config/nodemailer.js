@@ -16,6 +16,32 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/**
+ * Send email using nodemailer
+ * @param {Object} options - Email options
+ * @param {string} options.email - Recipient email
+ * @param {string} options.subject - Email subject
+ * @param {string} options.message - Email message
+ * @param {string} options.html - HTML content (optional)
+ */
+const sendEmail = async (options) => {
+  try {
+    const mailOptions = {
+      from: process.env.NODEMAILER_EMAIL,
+      to: options.email,
+      subject: options.subject,
+      text: options.message,
+      html: options.html || null,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully to:', options.email);
+  } catch (error) {
+    console.error('Email sending error:', error);
+    throw error;
+  }
+};
+
 const sendMail = (options) => {
   transporter.sendMail(options, (error, info) => {
     if (error) {
@@ -119,6 +145,7 @@ const nomineeMail = (ticket, nominee, user, host, protocol) => {
 };
 
 module.exports = {
+  sendEmail,
   signupMail,
   contactMail,
   relationMail,

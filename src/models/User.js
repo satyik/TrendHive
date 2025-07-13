@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const crypto=require('crypto')
 const bcrypt = require('bcryptjs')
-const utilities = require('../utilities/Utilities')
+const utilities = require('../utils/Utilities')
 const { isEmail } = require('validator')
 require('dotenv').config()
 
