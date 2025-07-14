@@ -1,6 +1,7 @@
 const Group = require('../models/Group');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Get all groups
@@ -39,10 +40,7 @@ const getAllGroups = async (req, res) => {
     });
   } catch (error) {
     console.error('Get groups error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch groups'
-    });
+    next(new AppError('Failed to fetch groups', 500));
   }
 };
 
@@ -74,10 +72,7 @@ const getGroupById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch group'
-    });
+    next(new AppError('Failed to fetch group', 500));
   }
 };
 
@@ -129,10 +124,7 @@ const createGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Create group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create group'
-    });
+    next(new AppError('Failed to create group', 500));
   }
 };
 
@@ -183,10 +175,7 @@ const updateGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Update group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update group'
-    });
+    next(new AppError('Failed to update group', 500));
   }
 };
 
@@ -234,10 +223,7 @@ const deleteGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete group'
-    });
+    next(new AppError('Failed to delete group', 500));
   }
 };
 
@@ -283,10 +269,7 @@ const joinGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Join group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to join group'
-    });
+    next(new AppError('Failed to join group', 500));
   }
 };
 
@@ -340,10 +323,7 @@ const leaveGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Leave group error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to leave group'
-    });
+    next(new AppError('Failed to leave group', 500));
   }
 };
 
@@ -398,10 +378,7 @@ const getGroupFeed = async (req, res) => {
     });
   } catch (error) {
     console.error('Get group feed error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch group feed'
-    });
+    next(new AppError('Failed to fetch group feed', 500));
   }
 };
 

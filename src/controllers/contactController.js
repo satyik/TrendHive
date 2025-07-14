@@ -1,12 +1,13 @@
 const Contact = require('../models/Contact');
 const { sendEmail } = require('../config/nodemailer');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Submit contact form
  * @route   POST /api/contact
  * @access  Public
  */
-const submitContact = async (req, res) => {
+const submitContact = async (req, res, next) => {
   try {
     const { name, email, subject, message } = req.body;
 
@@ -66,10 +67,7 @@ const submitContact = async (req, res) => {
     });
   } catch (error) {
     console.error('Contact submission error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to submit contact form. Please try again.'
-    });
+    next(new AppError('Failed to submit contact form. Please try again.', 500));
   }
 };
 
@@ -78,7 +76,7 @@ const submitContact = async (req, res) => {
  * @route   GET /api/contact
  * @access  Private (Admin)
  */
-const getAllContacts = async (req, res) => {
+const getAllContacts = async (req, res, next) => {
   try {
     const contacts = await Contact.find()
       .sort({ createdAt: -1 })
@@ -93,10 +91,7 @@ const getAllContacts = async (req, res) => {
     });
   } catch (error) {
     console.error('Get contacts error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch contact submissions'
-    });
+    next(new AppError('Failed to fetch contact submissions', 500));
   }
 };
 

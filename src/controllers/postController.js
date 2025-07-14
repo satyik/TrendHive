@@ -1,13 +1,14 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
 const Group = require('../models/Group');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Get all posts
  * @route   GET /api/posts
  * @access  Private
  */
-const getAllPosts = async (req, res) => {
+const getAllPosts = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, author, group } = req.query;
     
@@ -44,10 +45,7 @@ const getAllPosts = async (req, res) => {
     });
   } catch (error) {
     console.error('Get posts error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch posts'
-    });
+    next(new AppError('Failed to fetch posts', 500));
   }
 };
 
@@ -56,7 +54,7 @@ const getAllPosts = async (req, res) => {
  * @route   GET /api/posts/:id
  * @access  Private
  */
-const getPostById = async (req, res) => {
+const getPostById = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -81,10 +79,7 @@ const getPostById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get post error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch post'
-    });
+    next(new AppError('Failed to fetch post', 500));
   }
 };
 
@@ -93,7 +88,7 @@ const getPostById = async (req, res) => {
  * @route   POST /api/posts
  * @access  Private
  */
-const createPost = async (req, res) => {
+const createPost = async (req, res, next) => {
   try {
     const { content, groupId } = req.body;
     const userId = req.user._id;
@@ -151,10 +146,7 @@ const createPost = async (req, res) => {
     });
   } catch (error) {
     console.error('Create post error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create post'
-    });
+    next(new AppError('Failed to create post', 500));
   }
 };
 
@@ -163,7 +155,7 @@ const createPost = async (req, res) => {
  * @route   PUT /api/posts/:id
  * @access  Private
  */
-const updatePost = async (req, res) => {
+const updatePost = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -202,10 +194,7 @@ const updatePost = async (req, res) => {
     });
   } catch (error) {
     console.error('Update post error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update post'
-    });
+    next(new AppError('Failed to update post', 500));
   }
 };
 
@@ -214,7 +203,7 @@ const updatePost = async (req, res) => {
  * @route   DELETE /api/posts/:id
  * @access  Private
  */
-const deletePost = async (req, res) => {
+const deletePost = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -248,10 +237,7 @@ const deletePost = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete post error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete post'
-    });
+    next(new AppError('Failed to delete post', 500));
   }
 };
 
@@ -260,7 +246,7 @@ const deletePost = async (req, res) => {
  * @route   POST /api/posts/:id/like
  * @access  Private
  */
-const toggleLike = async (req, res) => {
+const toggleLike = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -300,10 +286,7 @@ const toggleLike = async (req, res) => {
     });
   } catch (error) {
     console.error('Toggle like error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to toggle like'
-    });
+    next(new AppError('Failed to toggle like', 500));
   }
 };
 
@@ -312,7 +295,7 @@ const toggleLike = async (req, res) => {
  * @route   POST /api/posts/:id/comment
  * @access  Private
  */
-const addComment = async (req, res) => {
+const addComment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -356,10 +339,7 @@ const addComment = async (req, res) => {
     });
   } catch (error) {
     console.error('Add comment error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add comment'
-    });
+    next(new AppError('Failed to add comment', 500));
   }
 };
 
@@ -368,7 +348,7 @@ const addComment = async (req, res) => {
  * @route   DELETE /api/posts/:postId/comment/:commentId
  * @access  Private
  */
-const deleteComment = async (req, res) => {
+const deleteComment = async (req, res, next) => {
   try {
     const { postId, commentId } = req.params;
     const userId = req.user._id;
@@ -414,10 +394,7 @@ const deleteComment = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete comment error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete comment'
-    });
+    next(new AppError('Failed to delete comment', 500));
   }
 };
 
@@ -426,7 +403,7 @@ const deleteComment = async (req, res) => {
  * @route   GET /api/posts/feed
  * @access  Private
  */
-const getUserFeed = async (req, res) => {
+const getUserFeed = async (req, res, next) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user._id;
@@ -468,10 +445,7 @@ const getUserFeed = async (req, res) => {
     });
   } catch (error) {
     console.error('Get user feed error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch user feed'
-    });
+    next(new AppError('Failed to fetch user feed', 500));
   }
 };
 

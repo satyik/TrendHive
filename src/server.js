@@ -14,6 +14,7 @@ const groupRoutes = require('./routes/groupRoutes');
 const postRoutes = require('./routes/postRoutes');
 const productRoutes = require('./routes/productRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const AppError = require('./utils/AppError');
 
 // Initialize app
 const app = express();
@@ -75,14 +76,15 @@ mongoose
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
-  
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-  
-  res.status(statusCode).json({
+  // Log error with more context
+  console.error(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - ${err.statusCode || 500} - ${err.message}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.error(err.stack);
+  }
+
+  res.status(err.statusCode || 500).json({
     success: false,
-    error: message,
+    error: err.message || 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });

@@ -1,11 +1,12 @@
 const User = require('../models/User');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Search users
  * @route   GET /api/users/search
  * @access  Private
  */
-const searchUsers = async (req, res) => {
+const searchUsers = async (req, res, next) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
     
@@ -48,10 +49,7 @@ const searchUsers = async (req, res) => {
     });
   } catch (error) {
     console.error('Search users error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to search users'
-    });
+    next(new AppError('Failed to search users', 500));
   }
 };
 
@@ -60,7 +58,7 @@ const searchUsers = async (req, res) => {
  * @route   GET /api/users/:id
  * @access  Private
  */
-const getUserById = async (req, res) => {
+const getUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -82,10 +80,7 @@ const getUserById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get user error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch user'
-    });
+    next(new AppError('Failed to fetch user', 500));
   }
 };
 
@@ -94,7 +89,7 @@ const getUserById = async (req, res) => {
  * @route   PUT /api/users/:id
  * @access  Private
  */
-const updateUser = async (req, res) => {
+const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -126,10 +121,7 @@ const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update user'
-    });
+    next(new AppError('Failed to update user', 500));
   }
 };
 
@@ -138,7 +130,7 @@ const updateUser = async (req, res) => {
  * @route   DELETE /api/users/:id
  * @access  Private
  */
-const deleteUser = async (req, res) => {
+const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -156,10 +148,7 @@ const deleteUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete user error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete user'
-    });
+    next(new AppError('Failed to delete user', 500));
   }
 };
 
@@ -168,7 +157,7 @@ const deleteUser = async (req, res) => {
  * @route   POST /api/users/upload-photo
  * @access  Private
  */
-const uploadPhoto = async (req, res) => {
+const uploadPhoto = async (req, res, next) => {
   try {
     const userId = req.user._id;
 
@@ -199,10 +188,7 @@ const uploadPhoto = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload photo error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to upload photo'
-    });
+    next(new AppError('Failed to upload photo', 500));
   }
 };
 
@@ -211,7 +197,7 @@ const uploadPhoto = async (req, res) => {
  * @route   GET /api/users/download/:type/pdf
  * @access  Private
  */
-const downloadData = async (req, res) => {
+const downloadData = async (req, res, next) => {
   try {
     const { type } = req.params;
     const userId = req.user._id;
@@ -244,10 +230,7 @@ const downloadData = async (req, res) => {
     });
   } catch (error) {
     console.error('Download data error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to download data'
-    });
+    next(new AppError('Failed to download data', 500));
   }
 };
 

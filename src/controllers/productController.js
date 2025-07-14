@@ -1,12 +1,13 @@
 const Product = require('../models/product.model');
 const User = require('../models/User');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Get all products
  * @route   GET /api/products
  * @access  Public
  */
-const getAllProducts = async (req, res) => {
+const getAllProducts = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, category, search } = req.query;
     
@@ -45,10 +46,7 @@ const getAllProducts = async (req, res) => {
     });
   } catch (error) {
     console.error('Get products error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch products'
-    });
+    next(new AppError('Failed to fetch products', 500));
   }
 };
 
@@ -57,7 +55,7 @@ const getAllProducts = async (req, res) => {
  * @route   GET /api/products/:id
  * @access  Public
  */
-const getProductById = async (req, res) => {
+const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -77,10 +75,7 @@ const getProductById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get product error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch product'
-    });
+    next(new AppError('Failed to fetch product', 500));
   }
 };
 
@@ -89,7 +84,7 @@ const getProductById = async (req, res) => {
  * @route   POST /api/products
  * @access  Private (Admin)
  */
-const createProduct = async (req, res) => {
+const createProduct = async (req, res, next) => {
   try {
     const { name, description, price, category, imageUrl, stock } = req.body;
 
@@ -111,10 +106,7 @@ const createProduct = async (req, res) => {
     });
   } catch (error) {
     console.error('Create product error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create product'
-    });
+    next(new AppError('Failed to create product', 500));
   }
 };
 
@@ -123,7 +115,7 @@ const createProduct = async (req, res) => {
  * @route   PUT /api/products/:id
  * @access  Private (Admin)
  */
-const updateProduct = async (req, res) => {
+const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -150,10 +142,7 @@ const updateProduct = async (req, res) => {
     });
   } catch (error) {
     console.error('Update product error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update product'
-    });
+    next(new AppError('Failed to update product', 500));
   }
 };
 
@@ -162,7 +151,7 @@ const updateProduct = async (req, res) => {
  * @route   DELETE /api/products/:id
  * @access  Private (Admin)
  */
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -180,10 +169,7 @@ const deleteProduct = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete product error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete product'
-    });
+    next(new AppError('Failed to delete product', 500));
   }
 };
 
@@ -194,7 +180,7 @@ const deleteProduct = async (req, res) => {
  * @route   GET /api/products/cart
  * @access  Private
  */
-const getCart = async (req, res) => {
+const getCart = async (req, res, next) => {
   try {
     const user = req.user;
     const bagItems = user.bagItems || [];
@@ -241,10 +227,7 @@ const getCart = async (req, res) => {
     });
   } catch (error) {
     console.error('Get cart error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch cart'
-    });
+    next(new AppError('Failed to fetch cart', 500));
   }
 };
 
@@ -253,7 +236,7 @@ const getCart = async (req, res) => {
  * @route   POST /api/products/cart/:id
  * @access  Private
  */
-const addToCart = async (req, res) => {
+const addToCart = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -290,10 +273,7 @@ const addToCart = async (req, res) => {
     });
   } catch (error) {
     console.error('Add to cart error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add product to cart'
-    });
+    next(new AppError('Failed to add product to cart', 500));
   }
 };
 
@@ -302,7 +282,7 @@ const addToCart = async (req, res) => {
  * @route   PUT /api/products/cart/:id
  * @access  Private
  */
-const updateCartItem = async (req, res) => {
+const updateCartItem = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { quantity } = req.body;
@@ -339,10 +319,7 @@ const updateCartItem = async (req, res) => {
     });
   } catch (error) {
     console.error('Update cart error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update cart'
-    });
+    next(new AppError('Failed to update cart', 500));
   }
 };
 
@@ -351,7 +328,7 @@ const updateCartItem = async (req, res) => {
  * @route   DELETE /api/products/cart/:id
  * @access  Private
  */
-const removeFromCart = async (req, res) => {
+const removeFromCart = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -370,10 +347,7 @@ const removeFromCart = async (req, res) => {
     });
   } catch (error) {
     console.error('Remove from cart error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to remove product from cart'
-    });
+    next(new AppError('Failed to remove product from cart', 500));
   }
 };
 
@@ -382,7 +356,7 @@ const removeFromCart = async (req, res) => {
  * @route   DELETE /api/products/cart
  * @access  Private
  */
-const clearCart = async (req, res) => {
+const clearCart = async (req, res, next) => {
   try {
     const userId = req.user._id;
 
@@ -394,10 +368,7 @@ const clearCart = async (req, res) => {
     });
   } catch (error) {
     console.error('Clear cart error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to clear cart'
-    });
+    next(new AppError('Failed to clear cart', 500));
   }
 };
 
@@ -408,7 +379,7 @@ const clearCart = async (req, res) => {
  * @route   GET /api/products/wishlist
  * @access  Private
  */
-const getWishlist = async (req, res) => {
+const getWishlist = async (req, res, next) => {
   try {
     const user = req.user;
     const wishlistItems = user.wishListItems || [];
@@ -438,10 +409,7 @@ const getWishlist = async (req, res) => {
     });
   } catch (error) {
     console.error('Get wishlist error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch wishlist'
-    });
+    next(new AppError('Failed to fetch wishlist', 500));
   }
 };
 
@@ -450,7 +418,7 @@ const getWishlist = async (req, res) => {
  * @route   POST /api/products/wishlist/:id
  * @access  Private
  */
-const addToWishlist = async (req, res) => {
+const addToWishlist = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -481,10 +449,7 @@ const addToWishlist = async (req, res) => {
     });
   } catch (error) {
     console.error('Add to wishlist error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to add product to wishlist'
-    });
+    next(new AppError('Failed to add product to wishlist', 500));
   }
 };
 
@@ -493,7 +458,7 @@ const addToWishlist = async (req, res) => {
  * @route   DELETE /api/products/wishlist/:id
  * @access  Private
  */
-const removeFromWishlist = async (req, res) => {
+const removeFromWishlist = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
@@ -509,10 +474,7 @@ const removeFromWishlist = async (req, res) => {
     });
   } catch (error) {
     console.error('Remove from wishlist error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to remove product from wishlist'
-    });
+    next(new AppError('Failed to remove product from wishlist', 500));
   }
 };
 

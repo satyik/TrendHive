@@ -4,13 +4,14 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const { sendEmail } = require('../config/nodemailer');
 const { validateRegistration, validateLogin } = require('../validators/authValidators');
+const AppError = require('../utils/AppError');
 
 /**
  * @desc    Register a new user
  * @route   POST /api/auth/register
  * @access  Public
  */
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     // Validate input
     const { error } = validateRegistration(req.body);
@@ -68,10 +69,7 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500));
   }
 };
 
@@ -80,7 +78,7 @@ const register = async (req, res) => {
  * @route   POST /api/auth/login
  * @access  Public
  */
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     // Validate input
     const { error } = validateLogin(req.body);
@@ -128,10 +126,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(401).json({
-      success: false,
-      error: 'Invalid credentials'
-    });
+    next(new AppError('Invalid credentials', 401));
   }
 };
 
